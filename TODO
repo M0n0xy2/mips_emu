@@ -1,0 +1,4 @@
+### TODO
+
+- Init sp and gp (_gp in elf) with value at init
+- MERGE different decoder with lambdas

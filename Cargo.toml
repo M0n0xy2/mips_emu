@@ -1,0 +1,8 @@
+[package]
+name = "lse_mips"
+version = "0.1.0"
+authors = ["Paul CACHEUX <paulcacheux@gmail.com>"]
+
+[dependencies]
+elf = "0.0.10"
+clap = "2.25"
