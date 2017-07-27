@@ -5,7 +5,7 @@ use clap::{Arg, App};
 
 mod utils;
 mod memory;
-mod machine;
+mod cpu;
 mod instruction;
 mod decoder;
 mod executer;
@@ -13,7 +13,7 @@ mod syscall;
 mod debugger;
 
 use debugger::Debugger;
-use machine::Machine;
+use cpu::Cpu;
 
 fn main() {
     let matches = App::new("MIPS emulator")
@@ -33,16 +33,16 @@ fn main() {
 
     let path = matches.value_of("INPUT").unwrap();
     
-    let mut machine = Machine::new();
-    machine.load_elf(path).expect("Can't read elf.");
+    let mut cpu = Cpu::new();
+    cpu.load_elf(path).expect("Can't read elf.");
 
     match matches.value_of("mode") {
         Some("debug") => {
-            let mut debugger = Debugger::new(machine);
+            let mut debugger = Debugger::new(cpu);
             debugger.launch();
         },
         _ => {
-            machine.run();
+            cpu.run();
         }
     }
 }

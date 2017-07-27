@@ -1,4 +1,4 @@
-use machine::Machine;
+use cpu::Cpu;
 use decoder;
 use executer;
 
@@ -65,8 +65,8 @@ pub enum Instruction {
 }
 
 impl Instruction {
-    pub fn apply(&self, machine: &mut Machine) -> PCOperation {
-        executer::apply_instruction(self, machine)
+    pub fn apply(&self, cpu: &mut Cpu) -> PCOperation {
+        executer::apply_instruction(self, cpu)
     }
 
     pub fn from_word(word: u32) -> Instruction {

@@ -8,7 +8,7 @@ use utils;
 pub const MEM_SIZE: usize = 1 << 24;
 
 #[derive(Debug, Clone)]
-pub struct Machine {
+pub struct Cpu {
     registers: [u32; 31],
     pub hi: u32,
     pub lo: u32,
@@ -17,9 +17,9 @@ pub struct Machine {
     pub memory: Memory,
 }
 
-impl Machine {
-    pub fn new() -> Machine {
-        Machine {
+impl Cpu {
+    pub fn new() -> Cpu {
+        Cpu {
             registers: [0; 31],
             hi: 0,
             lo: 0,
