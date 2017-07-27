@@ -1,12 +1,18 @@
 #[derive(Debug, Clone)]
 pub struct Memory {
-    pub data: Vec<u8>,
+    data: Vec<u8>,
 }
 
 impl Memory {
     pub fn new(mem_size: usize) -> Memory {
         Memory {
             data: vec![0; mem_size]
+        }
+    }
+
+    pub fn from_data(data: Vec<u8>) -> Memory {
+        Memory {
+            data
         }
     }
 

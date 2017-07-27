@@ -65,8 +65,8 @@ pub enum Instruction {
 }
 
 impl Instruction {
-    pub fn apply(&self, machine: &mut Machine, pc: u32) -> PCOperation {
-        executer::apply_instruction(self, machine, pc)
+    pub fn apply(&self, machine: &mut Machine) -> PCOperation {
+        executer::apply_instruction(self, machine)
     }
 
     pub fn from_word(word: u32) -> Instruction {

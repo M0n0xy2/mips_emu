@@ -27,7 +27,8 @@ macro_rules! check_address_aligned_half_word {
     }
 }
 
-pub fn apply_instruction(inst: &Instruction, machine: &mut Machine, pc: u32) -> PCOperation {
+pub fn apply_instruction(inst: &Instruction, machine: &mut Machine) -> PCOperation {
+    let pc = machine.pc;
     match *inst {
         Instruction::Unknown(inst) => {
             panic!("Unknown Instruction (pc= {:#x}). {:032b}", pc, inst);
@@ -437,7 +438,8 @@ pub fn apply_instruction(inst: &Instruction, machine: &mut Machine, pc: u32) -> 
         },
         Instruction::SW(base, rt, offset) => {
             let addr = utils::offset_addr(machine.get_register(base), offset);
-            
+            check_address_range!(addr);
+
             let word = machine.get_register(rt);
             machine.memory.set_word(addr, word);
 

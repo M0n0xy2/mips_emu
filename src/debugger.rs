@@ -1,15 +1,15 @@
 use std::io::{self, Write};
 use std::collections::HashMap;
-use runner::Runner;
+use machine::Machine;
 
 pub struct Debugger {
-    runner: Runner,
+    machine: Machine,
 }
 
 impl Debugger {
-    pub fn new(runner: Runner) -> Debugger {
+    pub fn new(machine: Machine) -> Debugger {
         Debugger {
-            runner,
+           machine
         }
     }
 
@@ -60,24 +60,24 @@ mod commands {
     }
 
     pub fn registers(dbg: &mut Debugger, args: Vec<&str>) -> Result<(), String> {
-        println!("pc = {:#010x}", dbg.runner.pc);
-        println!("hi = {:#010x}", dbg.runner.machine.hi);
-        println!("lo = {:#010x}", dbg.runner.machine.lo);
+        println!("pc = {:#010x}", dbg.machine.pc);
+        println!("hi = {:#010x}", dbg.machine.hi);
+        println!("lo = {:#010x}", dbg.machine.lo);
         for i in 0..32 {
-            println!("${} = {:#010x}", i, dbg.runner.machine.get_register(i));
+            println!("${} = {:#010x}", i, dbg.machine.get_register(i));
         }
         Ok(())
     }
 
     pub fn step(dbg: &mut Debugger, args: Vec<&str>) -> Result<(), String> {
-        if !dbg.runner.step() {
+        if !dbg.machine.step() {
             println!("Program has ended.");
         }
         Ok(())
     }
 
     pub fn continue_cmd(dbg: &mut Debugger, args: Vec<&str>) -> Result<(), String> {
-        dbg.runner.run();
+        dbg.machine.run();
         println!("Program has ended.");
         Ok(())
     }
