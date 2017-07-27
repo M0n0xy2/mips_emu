@@ -200,7 +200,7 @@ pub fn apply_instruction(inst: &Instruction, machine: &mut Machine, pc: u32) -> 
             let addr = utils::offset_addr(machine.get_register(base), offset);
             check_address_range!(addr);
 
-            let byte = machine.get_byte(addr) as i8;
+            let byte = machine.memory.get_byte(addr) as i8;
             machine.set_register(rt, utils::i2u(byte as i32));
             PCOperation::Offset(4)
         },
@@ -208,7 +208,7 @@ pub fn apply_instruction(inst: &Instruction, machine: &mut Machine, pc: u32) -> 
             let addr = utils::offset_addr(machine.get_register(base), offset);
             check_address_range!(addr);
 
-            let byte = machine.get_byte(addr);
+            let byte = machine.memory.get_byte(addr);
             machine.set_register(rt, byte as u32);
             PCOperation::Offset(4)
         },
@@ -217,7 +217,7 @@ pub fn apply_instruction(inst: &Instruction, machine: &mut Machine, pc: u32) -> 
             check_address_range!(addr);
             check_address_aligned_half_word!(addr);
 
-            let half = machine.get_half_word(addr) as i16;
+            let half = machine.memory.get_half_word(addr) as i16;
             machine.set_register(rt, utils::i2u(half as i32));
             PCOperation::Offset(4)
         },
@@ -226,7 +226,7 @@ pub fn apply_instruction(inst: &Instruction, machine: &mut Machine, pc: u32) -> 
             check_address_range!(addr);
             check_address_aligned_half_word!(addr);
 
-            let half = machine.get_half_word(addr);
+            let half = machine.memory.get_half_word(addr);
             machine.set_register(rt, half as u32);
             PCOperation::Offset(4)
         },
@@ -240,7 +240,7 @@ pub fn apply_instruction(inst: &Instruction, machine: &mut Machine, pc: u32) -> 
             check_address_range!(addr);
             check_address_aligned_word!(addr);
             
-            let word = machine.get_word(addr);
+            let word = machine.memory.get_word(addr);
             machine.set_register(rt, word);
             PCOperation::Offset(4)
         },
@@ -252,7 +252,7 @@ pub fn apply_instruction(inst: &Instruction, machine: &mut Machine, pc: u32) -> 
             
             let unaligned_offset = addr & 0b11;
 
-            let mem_part = machine.get_word(addr - unaligned_offset) << (8 * (3 - unaligned_offset));
+            let mem_part = machine.memory.get_word(addr - unaligned_offset) << (8 * (3 - unaligned_offset));
             let reg_part = if unaligned_offset != 3 {
                 rt_value & (0xFFFFFFFFu32 >> (8 * (unaligned_offset + 1)))
             } else {
@@ -271,7 +271,7 @@ pub fn apply_instruction(inst: &Instruction, machine: &mut Machine, pc: u32) -> 
 
             let unaligned_offset = addr & 0b11;
 
-            let mem_part = machine.get_word(addr - unaligned_offset) >> 8 * unaligned_offset;
+            let mem_part = machine.memory.get_word(addr - unaligned_offset) >> 8 * unaligned_offset;
             let reg_part = if unaligned_offset != 0 {
                 rt_value & (0xFFFFFFFFu32 << (8 * (4 - unaligned_offset)))
             } else {
@@ -342,7 +342,7 @@ pub fn apply_instruction(inst: &Instruction, machine: &mut Machine, pc: u32) -> 
             let addr = utils::offset_addr(machine.get_register(base), offset);
             check_address_range!(addr);
 
-            machine.set_byte(addr, byte);
+            machine.memory.set_byte(addr, byte);
             PCOperation::Offset(4)
         },
         Instruction::SH(base, rt, offset) => {
@@ -352,7 +352,7 @@ pub fn apply_instruction(inst: &Instruction, machine: &mut Machine, pc: u32) -> 
             let addr = utils::offset_addr(machine.get_register(base), offset);
             check_address_range!(addr);
 
-            machine.set_half_word(addr, half);
+            machine.memory.set_half_word(addr, half);
             PCOperation::Offset(4)
         },
         Instruction::SLL(rt, rd, shift) => {
@@ -439,7 +439,7 @@ pub fn apply_instruction(inst: &Instruction, machine: &mut Machine, pc: u32) -> 
             let addr = utils::offset_addr(machine.get_register(base), offset);
             
             let word = machine.get_register(rt);
-            machine.set_word(addr, word);
+            machine.memory.set_word(addr, word);
 
             PCOperation::Offset(4)
         },
@@ -450,14 +450,14 @@ pub fn apply_instruction(inst: &Instruction, machine: &mut Machine, pc: u32) -> 
             
             let unaligned_offset = addr & 0b11;
             let mem_part = if unaligned_offset != 3 {
-                machine.get_word(addr - unaligned_offset)
+                machine.memory.get_word(addr - unaligned_offset)
                     & (0xFFFFFFFFu32 << (8 * (unaligned_offset + 1)))
             } else {
                 0
             };
             let reg_part = rt_value >> (8 * (3 - unaligned_offset));
 
-            machine.set_word(addr - unaligned_offset, mem_part | reg_part);
+            machine.memory.set_word(addr - unaligned_offset, mem_part | reg_part);
             PCOperation::Offset(4)
         },
         Instruction::SWR(base, rt, offset) => {
@@ -467,14 +467,14 @@ pub fn apply_instruction(inst: &Instruction, machine: &mut Machine, pc: u32) -> 
 
             let unaligned_offset = addr & 0b11;
             let mem_part = if unaligned_offset != 0 {
-                machine.get_word(addr - unaligned_offset)
+                machine.memory.get_word(addr - unaligned_offset)
                     & (0xFFFFFFFFu32 >> 8 * (4 - unaligned_offset))
             } else {
                 0
             };
             let reg_part = rt_value << 8 * unaligned_offset;
             
-            machine.set_word(addr - unaligned_offset, mem_part | reg_part);
+            machine.memory.set_word(addr - unaligned_offset, mem_part | reg_part);
             PCOperation::Offset(4)
         },
         Instruction::SYSCALL => syscall::call_syscall(machine),

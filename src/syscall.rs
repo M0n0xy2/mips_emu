@@ -25,8 +25,8 @@ fn print_int(machine: &mut Machine) {
 fn print_string(machine: &mut Machine) {
     let mut addr = machine.get_register(4);
     let mut buff = String::new();
-    while machine.data[addr as usize] != 0 {
-        buff.push(machine.data[addr as usize] as char);
+    while machine.memory.get_byte(addr) != 0 {
+        buff.push(machine.memory.get_byte(addr) as char);
         addr += 1;
     }
     print!("{}", buff);
@@ -43,7 +43,7 @@ fn read_int(machine: &mut Machine) {
 
 fn read_string(machine: &mut Machine) {
     // really not sure about this implementation
-    let mut addr = machine.get_register(4) as usize;
+    let mut addr = machine.get_register(4);
     let len = machine.get_register(5) as usize;
     let stdin = io::stdin();
 
@@ -53,8 +53,8 @@ fn read_string(machine: &mut Machine) {
         .take(len - 1)
         .map(Result::unwrap)
         .take_while(|c| *c != b'\n') {
-        machine.data[addr] = c; 
+        machine.memory.set_byte(addr, c);
         addr += 1;
     }
-    machine.data[addr] = 0;
+    machine.memory.set_byte(addr, 0);
 }

@@ -23,7 +23,7 @@ impl Runner {
     }
 
     pub fn step(&mut self) -> bool { // false => exit
-        let word = self.machine.get_word(self.pc);
+        let word = self.machine.memory.get_word(self.pc);
         let inst = Instruction::from_word(word);
         // println!("Executing (pc={:#x}): {}", self.pc, inst);
         match inst.apply(&mut self.machine, self.pc) {

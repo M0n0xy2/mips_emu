@@ -4,6 +4,7 @@ extern crate clap;
 use clap::{Arg, App};
 
 mod utils;
+mod memory;
 mod machine;
 mod runner;
 mod instruction;
