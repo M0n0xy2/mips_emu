@@ -1,5 +1,8 @@
 extern crate elf;
 extern crate clap;
+extern crate regex;
+#[macro_use]
+extern crate lazy_static;
 
 use clap::{Arg, App};
 
@@ -42,7 +45,7 @@ fn main() {
             debugger.launch();
         },
         _ => {
-            cpu.run();
+            cpu.run(false);
         }
     }
 }

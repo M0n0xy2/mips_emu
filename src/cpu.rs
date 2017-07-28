@@ -57,15 +57,19 @@ impl Cpu {
         self.memory = Memory::new(MEM_SIZE);
     }
 
-    pub fn run(&mut self) {
-        while self.step() {
+    pub fn run(&mut self, log: bool) {
+        while self.step(log) {
         }
     }
 
-    pub fn step(&mut self) -> bool { // false => exit
+    pub fn step(&mut self, log: bool) -> bool { // false => exit
         let word = self.memory.get_word(self.pc);
         let inst = Instruction::from_word(word);
-        // println!("Executing (pc={:#x}): {}", self.pc, inst);
+        
+        if log {
+            println!("Executing (pc={:#x}): {}", self.pc, inst);
+        }
+
         match inst.apply(self) {
             PCOperation::Offset(value) => self.offset(value),
             PCOperation::JumpReal(index) => self.jump_real(index),

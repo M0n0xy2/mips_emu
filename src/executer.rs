@@ -439,6 +439,7 @@ pub fn apply_instruction(inst: &Instruction, cpu: &mut Cpu) -> PCOperation {
         Instruction::SW(base, rt, offset) => {
             let addr = utils::offset_addr(cpu.get_register(base), offset);
             check_address_range!(addr);
+            check_address_aligned_word!(addr);
 
             let word = cpu.get_register(rt);
             cpu.memory.set_word(addr, word);
