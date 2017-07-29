@@ -26,26 +26,23 @@ fn main() {
              .help("Sets the input file to use.")
              .required(true)
              .index(1))
-        .arg(Arg::with_name("mode")
-             .help("Choose the mode (run, debug). Defaults to run.")
-             .short("m")
-             .long("mode")
-             .takes_value(true)
-             .possible_values(&["run", "debug"]))
+        .arg(Arg::with_name("debug")
+             .help("Activate debugger.")
+             .short("d")
+             .long("debug"))
         .get_matches();
 
     let path = matches.value_of("INPUT").unwrap();
     
     let mut cpu = Cpu::new();
-    cpu.load_elf(path).expect("Can't read elf.");
+    let elf_file = elf::File::open_path(path).expect("Can't read elf.");
 
-    match matches.value_of("mode") {
-        Some("debug") => {
-            let mut debugger = Debugger::new(cpu);
-            debugger.launch();
-        },
-        _ => {
-            cpu.run(false);
-        }
+    cpu.load_elf(elf_file).unwrap();
+
+    if matches.is_present("debug") {
+        let mut debugger = Debugger::new(cpu);
+        debugger.launch();
+    } else {
+        cpu.run(false);
     }
 }

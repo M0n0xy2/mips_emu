@@ -1,4 +1,3 @@
-use std::path::Path;
 use elf;
 
 use memory::Memory;
@@ -102,8 +101,7 @@ impl Cpu {
         self.npc = upper | lower;
     }
 
-    pub fn load_elf<P: AsRef<Path>>(&mut self, path: P) -> Result<(), elf::ParseError> {
-        let file = elf::File::open_path(path)?;
+    pub fn load_elf(&mut self, file: elf::File) -> Result<(), String> {
         let mut data = vec![0; MEM_SIZE];
 
         for section in file.sections {
@@ -111,7 +109,9 @@ impl Cpu {
                 let addr = section.shdr.addr as usize;
                 let size = section.data.len();
 
-                assert!(addr + size <= MEM_SIZE, "Section is too big.");
+                if addr + size > MEM_SIZE {
+                    return Err(format!("Section {} is too big.", section.shdr.name));
+                }
 
                 for i in 0..size {
                     data[addr + i] = section.data[i];
@@ -119,9 +119,13 @@ impl Cpu {
             }
         }
 
-        assert!(file.ehdr.elftype.0 == 2, "File is not executable.");
-        assert!(file.ehdr.machine.0 == 8, "File is not MIPS.");
-        
+        if file.ehdr.elftype.0 != 2 {
+            return Err("File is not executable.".to_string());
+        }
+        if file.ehdr.machine.0 != 8 {
+            return Err("File is not MIPS.".to_string());
+        }
+
         let entry = (file.ehdr.entry / 4) * 4;
         
         self.reset();

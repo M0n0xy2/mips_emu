@@ -1,4 +1,10 @@
 ### TODO
 
-- Init sp and gp (_gp in elf) with value at init
+- init sp at init
 - MERGE different decoder with lambdas
+- add #[inline] to some functions
+
+- Memory pages (implement at get_byte level and reimplement get_* with bytes)
+- add instruction decoding cache
+- debugger : reload and load
+- init gp (_gp in elf) with value at init
