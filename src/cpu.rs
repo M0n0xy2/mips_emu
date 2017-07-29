@@ -1,12 +1,10 @@
+use std;
 use elf;
 
 use memory::Memory;
 use instruction::{Instruction, PCOperation};
 use utils;
 
-pub const MEM_SIZE: usize = 1 << 24;
-
-#[derive(Debug, Clone)]
 pub struct Cpu {
     registers: [u32; 31],
     pub hi: u32,
@@ -24,7 +22,7 @@ impl Cpu {
             lo: 0,
             pc: 0,
             npc: 4,
-            memory: Memory::new(MEM_SIZE),
+            memory: Memory::new(),
         }
     }
 
@@ -47,13 +45,13 @@ impl Cpu {
         }
     }
 
-    pub fn reset(&mut self) {
+    pub fn reset_with_memory(&mut self, memory: Memory) {
         self.registers = [0; 31];
         self.hi = 0;
         self.lo = 0;
         self.pc = 0;
         self.npc = 4;
-        self.memory = Memory::new(MEM_SIZE);
+        self.memory = memory;
     }
 
     pub fn run(&mut self, log: bool) {
@@ -102,19 +100,19 @@ impl Cpu {
     }
 
     pub fn load_elf(&mut self, file: elf::File) -> Result<(), String> {
-        let mut data = vec![0; MEM_SIZE];
+        let mut memory = Memory::new();
 
         for section in file.sections {
             if section.shdr.shtype.0 == 1 { //PT_LOAD
                 let addr = section.shdr.addr as usize;
                 let size = section.data.len();
 
-                if addr + size > MEM_SIZE {
+                if addr + size > std::u32::MAX as usize {
                     return Err(format!("Section {} is too big.", section.shdr.name));
                 }
 
                 for i in 0..size {
-                    data[addr + i] = section.data[i];
+                    memory.set_byte((addr + i) as u32, section.data[i]);
                 }
             }
         }
@@ -128,8 +126,7 @@ impl Cpu {
 
         let entry = (file.ehdr.entry / 4) * 4;
         
-        self.reset();
-        self.memory = Memory::from_data(data);
+        self.reset_with_memory(memory);
 
         self.pc = entry as u32;
         self.npc = self.pc + 4;

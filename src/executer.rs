@@ -1,15 +1,7 @@
 use utils;
 use instruction::{Instruction, PCOperation};
-use cpu::{self, Cpu};
+use cpu::Cpu;
 use syscall;
-
-macro_rules! check_address_range {
-    ($addr:expr) => {
-        if $addr as usize >= cpu::MEM_SIZE {
-            return PCOperation::Trap("Address out of range.".to_string())
-        }
-    }
-}
 
 macro_rules! check_address_aligned_word {
     ($addr:expr) => {
@@ -199,7 +191,6 @@ pub fn apply_instruction(inst: &Instruction, cpu: &mut Cpu) -> PCOperation {
         },
         Instruction::LB(base, rt, offset) => {
             let addr = utils::offset_addr(cpu.get_register(base), offset);
-            check_address_range!(addr);
 
             let byte = cpu.memory.get_byte(addr) as i8;
             cpu.set_register(rt, utils::i2u(byte as i32));
@@ -207,7 +198,6 @@ pub fn apply_instruction(inst: &Instruction, cpu: &mut Cpu) -> PCOperation {
         },
         Instruction::LBU(base, rt, offset) => {
             let addr = utils::offset_addr(cpu.get_register(base), offset);
-            check_address_range!(addr);
 
             let byte = cpu.memory.get_byte(addr);
             cpu.set_register(rt, byte as u32);
@@ -215,7 +205,6 @@ pub fn apply_instruction(inst: &Instruction, cpu: &mut Cpu) -> PCOperation {
         },
         Instruction::LH(base, rt, offset) => {
             let addr = utils::offset_addr(cpu.get_register(base), offset);
-            check_address_range!(addr);
             check_address_aligned_half_word!(addr);
 
             let half = cpu.memory.get_half_word(addr) as i16;
@@ -224,7 +213,6 @@ pub fn apply_instruction(inst: &Instruction, cpu: &mut Cpu) -> PCOperation {
         },
         Instruction::LHU(base, rt, offset) => {
             let addr = utils::offset_addr(cpu.get_register(base), offset);
-            check_address_range!(addr);
             check_address_aligned_half_word!(addr);
 
             let half = cpu.memory.get_half_word(addr);
@@ -238,7 +226,6 @@ pub fn apply_instruction(inst: &Instruction, cpu: &mut Cpu) -> PCOperation {
         Instruction::LW(base, rt, offset) => {
             let addr = utils::offset_addr(cpu.get_register(base), offset);
 
-            check_address_range!(addr);
             check_address_aligned_word!(addr);
             
             let word = cpu.memory.get_word(addr);
@@ -249,8 +236,6 @@ pub fn apply_instruction(inst: &Instruction, cpu: &mut Cpu) -> PCOperation {
             let rt_value = cpu.get_register(rt);
             let addr = utils::offset_addr(cpu.get_register(base), offset);
 
-            check_address_range!(addr);
-            
             let unaligned_offset = addr & 0b11;
 
             let mem_part = cpu.memory.get_word(addr - unaligned_offset) << (8 * (3 - unaligned_offset));
@@ -267,8 +252,6 @@ pub fn apply_instruction(inst: &Instruction, cpu: &mut Cpu) -> PCOperation {
         Instruction::LWR(base, rt, offset) => {
             let rt_value = cpu.get_register(rt);
             let addr = utils::offset_addr(cpu.get_register(base), offset);
-
-            check_address_range!(addr);
 
             let unaligned_offset = addr & 0b11;
 
@@ -341,7 +324,6 @@ pub fn apply_instruction(inst: &Instruction, cpu: &mut Cpu) -> PCOperation {
             let byte = word as u8;
 
             let addr = utils::offset_addr(cpu.get_register(base), offset);
-            check_address_range!(addr);
 
             cpu.memory.set_byte(addr, byte);
             PCOperation::Offset(4)
@@ -351,7 +333,6 @@ pub fn apply_instruction(inst: &Instruction, cpu: &mut Cpu) -> PCOperation {
             let half = word as u16;
 
             let addr = utils::offset_addr(cpu.get_register(base), offset);
-            check_address_range!(addr);
 
             cpu.memory.set_half_word(addr, half);
             PCOperation::Offset(4)
@@ -438,7 +419,6 @@ pub fn apply_instruction(inst: &Instruction, cpu: &mut Cpu) -> PCOperation {
         },
         Instruction::SW(base, rt, offset) => {
             let addr = utils::offset_addr(cpu.get_register(base), offset);
-            check_address_range!(addr);
             check_address_aligned_word!(addr);
 
             let word = cpu.get_register(rt);
@@ -449,7 +429,6 @@ pub fn apply_instruction(inst: &Instruction, cpu: &mut Cpu) -> PCOperation {
         Instruction::SWL(base, rt, offset) => {
             let rt_value = cpu.get_register(rt);
             let addr = utils::offset_addr(cpu.get_register(base), offset);
-            check_address_range!(addr);
             
             let unaligned_offset = addr & 0b11;
             let mem_part = if unaligned_offset != 3 {
@@ -466,7 +445,6 @@ pub fn apply_instruction(inst: &Instruction, cpu: &mut Cpu) -> PCOperation {
         Instruction::SWR(base, rt, offset) => {
             let rt_value = cpu.get_register(rt);
             let addr = utils::offset_addr(cpu.get_register(base), offset);
-            check_address_range!(addr);
 
             let unaligned_offset = addr & 0b11;
             let mem_part = if unaligned_offset != 0 {

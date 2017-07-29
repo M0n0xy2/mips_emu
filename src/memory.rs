@@ -1,33 +1,34 @@
-#[derive(Debug, Clone)]
+use std::collections::HashMap;
+
 pub struct Memory {
-    data: Vec<u8>,
+    blocks: HashMap<usize, Block>
 }
 
 impl Memory {
-    pub fn new(mem_size: usize) -> Memory {
+    pub fn new() -> Memory {
         Memory {
-            data: vec![0; mem_size]
-        }
-    }
-
-    pub fn from_data(data: Vec<u8>) -> Memory {
-        Memory {
-            data
+            blocks: HashMap::new()
         }
     }
 
     #[inline]
     pub fn get_byte(&self, index: u32) -> u8 {
-        let index = index as usize;
+        let (block_id, data_id) = get_ids(index);
 
-        self.data[index]
+        if let Some(block) = self.blocks.get(&block_id) {
+            block.data[data_id]
+        } else {
+            0
+        }
     }
 
     #[inline]
     pub fn set_byte(&mut self, index: u32, byte: u8) {
-        let index = index as usize;
+        let (block_id, data_id) = get_ids(index);
 
-        self.data[index] = byte;
+        self.blocks
+            .entry(block_id)
+            .or_insert_with(Block::new).data[data_id] = byte;
     }
 
     pub fn get_half_word(&self, index: u32) -> u16 {
@@ -57,4 +58,25 @@ impl Memory {
         self.set_byte(index + 2, (word >> 16) as u8);
         self.set_byte(index + 3, (word >> 24) as u8);
     }
+}
+
+const BLOCK_BIT_LEN: usize = 8;
+
+struct Block {
+    pub data: [u8; 1 << BLOCK_BIT_LEN]
+}
+
+impl Block {
+    pub fn new() -> Self {
+        Block {
+            data: [0; 1 << BLOCK_BIT_LEN]
+        }
+    }
+}
+
+fn get_ids(index: u32) -> (usize, usize) {
+    let block_id = (index >> BLOCK_BIT_LEN) as usize;
+    let data_id = (index & !(0xFFFFFFFF << BLOCK_BIT_LEN)) as usize;
+
+    (block_id, data_id)
 }
