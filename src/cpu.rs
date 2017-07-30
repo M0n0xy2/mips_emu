@@ -5,6 +5,7 @@ use memory::Memory;
 use instruction::{Instruction, PCOperation};
 use utils;
 
+#[derive(Debug, Clone)]
 pub struct Cpu {
     registers: [u32; 31],
     pub hi: u32,
@@ -24,7 +25,7 @@ impl Cpu {
             pc: 0,
             npc: 4,
             memory: Memory::new(),
-            state: State::Paused,
+            state: State::Halted,
         }
     }
 
@@ -54,6 +55,7 @@ impl Cpu {
         self.pc = 0;
         self.npc = 4;
         self.memory = memory;
+        self.state = State::Paused;
     }
 
     pub fn continue_execution(&mut self, log: bool) {

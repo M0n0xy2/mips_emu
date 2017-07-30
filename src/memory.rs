@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+#[derive(Debug, Clone)]
 pub struct Memory {
     blocks: HashMap<usize, Block>
 }
@@ -62,14 +63,15 @@ impl Memory {
 
 const BLOCK_BIT_LEN: usize = 8;
 
+#[derive(Debug, Clone)]
 struct Block {
-    pub data: [u8; 1 << BLOCK_BIT_LEN]
+    pub data: Vec<u8>
 }
 
 impl Block {
     pub fn new() -> Self {
         Block {
-            data: [0; 1 << BLOCK_BIT_LEN]
+            data: vec![0; 1 << BLOCK_BIT_LEN]
         }
     }
 }

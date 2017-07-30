@@ -1,12 +1,15 @@
 use std::io::{self, Write};
 use std::collections::HashMap;
+use std::path::Path;
 
+use elf;
 
 use cpu::{Cpu, State};
 
 pub struct Debugger {
     cpu: Cpu,
     log: bool,
+    saved_cpu: Option<Cpu>,
 }
 
 impl Debugger {
@@ -14,19 +17,11 @@ impl Debugger {
         Debugger {
            cpu,
            log: false,
+           saved_cpu: None
         }
     }
 
     pub fn launch(&mut self) {
-        let mut cmds: HashMap<&str, commands::Command> = HashMap::new();
-        cmds.insert("help", commands::help);
-        cmds.insert("registers", commands::registers);
-        cmds.insert("step", commands::step);
-        cmds.insert("continue", commands::continue_cmd);
-        cmds.insert("print", commands::print);
-        cmds.insert("log", commands::log);
-        cmds.insert("state", commands::state);
-
         loop {
             print!("dbg> ");
             io::stdout().flush().unwrap();
@@ -44,12 +39,34 @@ impl Debugger {
                 break
             }
 
-            if let Some(cmd_func) = cmds.get(cmd) {
-                if let Err(err) = cmd_func(self, args) {
-                    println!("Error: {}", err);
-                }
+            self.execute_command(cmd, args);
+        }
+    }
+
+    pub fn execute_command(&mut self, cmd: &str, args: Vec<&str>) {
+        let mut cmds: HashMap<&str, commands::Command> = HashMap::new();
+        cmds.insert("help", commands::help);
+        cmds.insert("load", commands::load);
+        cmds.insert("restart", commands::restart);
+        cmds.insert("registers", commands::registers);
+        cmds.insert("step", commands::step);
+        cmds.insert("continue", commands::continue_cmd);
+        cmds.insert("print", commands::print);
+        cmds.insert("log", commands::log);
+        cmds.insert("state", commands::state);
+
+        if let Some(cmd_func) = cmds.get(cmd) {
+            if let Err(err) = cmd_func(self, args) {
+                println!("Error: {}", err);
             }
         }
+    }
+
+    pub fn load<P: AsRef<Path>>(&mut self, path: P) -> Result<(), String> {
+        let elf_file = elf::File::open_path(path).expect("Can't read elf.");
+        self.cpu.load_elf(elf_file)?;
+        self.saved_cpu = Some(self.cpu.clone());
+        Ok(())
     }
 
     pub fn print_cpu_state(&self, running: bool) {
@@ -108,6 +125,8 @@ mod commands {
 
     pub fn help(_: &mut Debugger, _: Vec<&str>) -> Result<(), String> {
         println!("Debugger help:");
+        println!("load <path> - load elf file");
+        println!("restart - restart the current program");
         println!("registers - print value of all registers");
         println!("step - execute the next instruction");
         println!("continue - run the program until breakpoint/exit");
@@ -116,6 +135,23 @@ mod commands {
         println!("log [on|off] - (de)activate the execution logging");
         println!("state - print cpu state (halted|running|paused)");
         Ok(())
+    }
+
+    pub fn load(dbg: &mut Debugger, args: Vec<&str>) -> Result<(), String> {
+        expect_n_args!(1, args);
+
+        dbg.load(args[0])
+    }
+
+    pub fn restart(dbg: &mut Debugger, args: Vec<&str>) -> Result<(), String> {
+        expect_n_args!(0, args);
+
+        if let Some(cpu) = dbg.saved_cpu.clone() {
+            dbg.cpu = cpu;
+            Ok(())
+        } else {
+            Err("Restart impossible. No file has ever been loaded.".to_string())
+        }
     }
 
     pub fn registers(dbg: &mut Debugger, args: Vec<&str>) -> Result<(), String> {
