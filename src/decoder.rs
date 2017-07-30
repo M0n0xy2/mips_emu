@@ -24,7 +24,7 @@ pub fn decode_instruction(word: u32) -> Instruction {
         0b001100 => decode_i_zero_extend(word, Instruction::ANDI),
         0b001101 => decode_i_zero_extend(word, Instruction::ORI),
         0b001110 => decode_i_zero_extend(word, Instruction::XORI),
-        0b001111 => decode_i_zero_extend(word, Instruction::LUI),
+        0b001111 => decode_i_zero_extend(word, |_, rt, imm| Instruction::LUI(rt, imm)),
         0b100000 => decode_i_sign_extend(word, Instruction::LB),
         0b100001 => decode_i_sign_extend(word, Instruction::LH),
         0b100010 => decode_i_sign_extend(word, Instruction::LWL),
@@ -68,13 +68,13 @@ fn decode_r_inst(word: u32) -> Instruction {
         0b000100 => decode_r_no_shift(word, Instruction::SLLV),
         0b000110 => decode_r_no_shift(word, Instruction::SRLV),
         0b000111 => decode_r_no_shift(word, Instruction::SRAV),
-        0b001000 => decode_jr(word),
-        0b001001 => decode_jalr(word),
+        0b001000 => decode_r_no_shift(word, |rs, _, _| Instruction::JR(rs)),
+        0b001001 => decode_r_no_shift(word, |rs, _, rd| Instruction::JALR(rs, rd)),
         0b001100 => Instruction::SYSCALL,
-        0b010000 => decode_r_rd(word, Instruction::MFHI),
-        0b010001 => decode_r_rs(word, Instruction::MTHI),
-        0b010010 => decode_r_rd(word, Instruction::MFLO),
-        0b010011 => decode_r_rs(word, Instruction::MTLO),
+        0b010000 => decode_r_no_shift(word, |_, _, rd| Instruction::MFHI(rd)),
+        0b010001 => decode_r_no_shift(word, |rs, _, _| Instruction::MTHI(rs)),
+        0b010010 => decode_r_no_shift(word, |_, _, rd| Instruction::MFLO(rd)),
+        0b010011 => decode_r_no_shift(word, |rs, _, _| Instruction::MTLO(rs)),
         0b011000 => decode_r_div_mul(word, Instruction::MULT),
         0b011001 => decode_r_div_mul(word, Instruction::MULTU),
         0b011010 => decode_r_div_mul(word, Instruction::DIV),
@@ -89,6 +89,7 @@ fn decode_r_inst(word: u32) -> Instruction {
         0b100111 => decode_r_no_shift(word, Instruction::NOR),
         0b101010 => decode_r_no_shift(word, Instruction::SLT),
         0b101011 => decode_r_no_shift(word, Instruction::SLTU),
+        0b110100 => decode_r_no_shift(word, |rs, rt, _| Instruction::TEQ(rs, rt)),
         _ => Instruction::Unknown(word),
     }
 }
@@ -143,29 +144,8 @@ fn decode_branch_comp(word: u32) -> Instruction {
     constructor(rs, offset)
 }
 
-fn decode_r_rd(word: u32, constructor: fn(u32) -> Instruction) -> Instruction {
-    let rd = (word << 16) >> 27;
-    constructor(rd)
-}
-
-fn decode_r_rs(word: u32, constructor: fn(u32) -> Instruction) -> Instruction {
-    let rs = (word << 6) >> 27;
-    constructor(rs)
-}
-
 type JumpConstructor = fn(u32) -> Instruction;
 fn decode_jump(word: u32, constructor: JumpConstructor) -> Instruction {
     let instr_index = (word << 6) >> 6;
     constructor(instr_index)
-}
-
-fn decode_jr(word: u32) -> Instruction {
-    let rs = (word << 6) >> 27;
-    Instruction::JR(rs)
-}
-
-fn decode_jalr(word: u32) -> Instruction {
-    let rs = (word << 6) >> 27;
-    let rd = (word << 16) >> 27;
-    Instruction::JALR(rs, rd)
 }

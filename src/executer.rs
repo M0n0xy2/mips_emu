@@ -219,7 +219,7 @@ pub fn apply_instruction(inst: &Instruction, cpu: &mut Cpu) -> PCOperation {
             cpu.set_register(rt, half as u32);
             PCOperation::Offset(4)
         },
-        Instruction::LUI(_, rt, imm) => {
+        Instruction::LUI(rt, imm) => {
             cpu.set_register(rt, imm << 16);
             PCOperation::Offset(4)
         },
@@ -468,6 +468,15 @@ pub fn apply_instruction(inst: &Instruction, cpu: &mut Cpu) -> PCOperation {
             PCOperation::Offset(4)
         },
         Instruction::SYSCALL => syscall::call_syscall(cpu),
+        Instruction::TEQ(rs, rt) => {
+            let rs_value = cpu.get_register(rs);
+            let rt_value = cpu.get_register(rt);
+            if rs_value == rt_value {
+                PCOperation::Trap("TEQ trap".to_string())
+            } else {
+                PCOperation::Offset(4)
+            }
+        },
         Instruction::XOR(rs, rt, rd) => {
             let rs_value = cpu.get_register(rs);
             let rt_value = cpu.get_register(rt);

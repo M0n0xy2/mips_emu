@@ -29,7 +29,7 @@ pub enum Instruction {
     LBU(u32, u32, i32), // base, rt, offset
     LH(u32, u32, i32), // base, rt, offset
     LHU(u32, u32, i32), // base, rt, offset
-    LUI(u32, u32, u32), // rs(unused), rt, imm
+    LUI(u32, u32), // rt, imm
     LW(u32, u32, i32), // base, rt, offset
     LWL(u32, u32, i32), // base, rt, offset
     LWR(u32, u32, i32), // base, rt, offset
@@ -61,6 +61,7 @@ pub enum Instruction {
     SWL(u32, u32, i32), // base, rt, offset
     SWR(u32, u32, i32), // base, rt, offset
     SYSCALL,
+    TEQ(u32, u32), // rs, rt
     XOR(u32, u32, u32), // rs, rt, rd
     XORI(u32, u32, u32), // rs, rt, imm
 }
@@ -112,7 +113,7 @@ impl fmt::Display for Instruction {
             Instruction::LBU(base, rt, offset) => write!(f, "lbu ${}, {}(${})", rt, offset, base),
             Instruction::LH(base, rt, offset) => write!(f, "lh ${}, {}(${})", rt, offset, base),
             Instruction::LHU(base, rt, offset) => write!(f, "lhu ${}, {}(${})", rt, offset, base),
-            Instruction::LUI(_, rt, imm) => write!(f, "lui ${}, {}", rt, imm),
+            Instruction::LUI(rt, imm) => write!(f, "lui ${}, {}", rt, imm),
             Instruction::LW(base, rt, offset) => write!(f, "lw ${}, {}(${})", rt, offset, base),
             Instruction::LWL(base, rt, offset) => write!(f, "lwl ${}, {}(${})", rt, offset, base),
             Instruction::LWR(base, rt, offset) => write!(f, "lwr ${}, {}(${})", rt, offset, base),
@@ -144,6 +145,7 @@ impl fmt::Display for Instruction {
             Instruction::SWL(base, rt, offset) => write!(f, "swl ${}, {}(${})", rt, offset, base),
             Instruction::SWR(base, rt, offset) => write!(f, "swr ${}, {}(${})", rt, offset, base),
             Instruction::SYSCALL => write!(f, "syscall"),
+            Instruction::TEQ(rs, rt) => write!(f, "teq ${}, ${}", rs, rt),
             Instruction::XOR(rs, rt, rd) => write!(f, "xor ${}, ${}, ${}", rd, rs, rt),
             Instruction::XORI(rs, rt, imm) => write!(f, "xori ${}, ${}, {}", rt, rs, imm),
         }
