@@ -25,6 +25,7 @@ impl Debugger {
         cmds.insert("continue", commands::continue_cmd);
         cmds.insert("print", commands::print);
         cmds.insert("log", commands::log);
+        cmds.insert("state", commands::state);
 
         loop {
             print!("dbg> ");
@@ -56,6 +57,7 @@ mod commands {
     use std::collections::HashMap;
     use regex::Regex;
     use super::Debugger;
+    use cpu::State;
 
     macro_rules! expect_n_args {
         ($n:expr, $args:expr) => {
@@ -97,6 +99,7 @@ mod commands {
         println!("print $XX - print register");
         println!("print 0xXXXXXXXX - print memory byre");
         println!("log [on|off] - (de)activate the execution logging");
+        println!("state - print cpu state (halted|running|paused)");
         Ok(())
     }
 
@@ -126,9 +129,17 @@ mod commands {
         };
 
         for _ in 0..n {
-            if !dbg.cpu.step(dbg.log) {
-                println!("Program has ended.");
-                break
+            dbg.cpu.step(dbg.log);
+            match dbg.cpu.state {
+                State::Halted => {
+                    println!("Program has ended.");
+                    break
+                },
+                State::Paused => {
+                    println!("Program is paused.");
+                    break
+                },
+                _ => {}
             }
         }
         
@@ -138,7 +149,7 @@ mod commands {
     pub fn continue_cmd(dbg: &mut Debugger, args: Vec<&str>) -> Result<(), String> {
         expect_n_args!(0, args);
 
-        dbg.cpu.run(dbg.log);
+        dbg.cpu.continue_execution(dbg.log);
         println!("Program has ended.");
         Ok(())
     }
@@ -225,6 +236,17 @@ mod commands {
             _ => return Err("Unrecognized argument.".to_string())
         };
 
+        Ok(())
+    }
+
+    pub fn state(dbg: &mut Debugger, args: Vec<&str>) -> Result<(), String> {
+        expect_n_args!(0, args);
+
+        match dbg.cpu.state {
+            State::Running => println!("running"),
+            State::Halted => println!("halted"),
+            State::Paused => println!("paused"),
+        }
         Ok(())
     }
 }

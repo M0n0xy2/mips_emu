@@ -12,6 +12,7 @@ pub struct Cpu {
     pub pc: u32,
     npc: u32,
     pub memory: Memory,
+    pub state: State,
 }
 
 impl Cpu {
@@ -23,6 +24,7 @@ impl Cpu {
             pc: 0,
             npc: 4,
             memory: Memory::new(),
+            state: State::Paused,
         }
     }
 
@@ -54,12 +56,19 @@ impl Cpu {
         self.memory = memory;
     }
 
-    pub fn run(&mut self, log: bool) {
-        while self.step(log) {
+    pub fn continue_execution(&mut self, log: bool) {
+        if self.state != State::Halted {
+            loop {
+                self.step(log);
+                if self.state != State::Running {
+                    break
+                }
+            }
         }
     }
 
-    pub fn step(&mut self, log: bool) -> bool { // false => exit
+    pub fn step(&mut self, log: bool) {
+        self.state = State::Running;
         let word = self.memory.get_word(self.pc);
         let inst = Instruction::from_word(word);
         
@@ -74,11 +83,14 @@ impl Cpu {
             PCOperation::Trap(reason) => {
                 println!("{}", reason);
                 self.offset(4);
+            },
+            PCOperation::Breakpoint => {
+                self.state = State::Paused;
+            },
+            PCOperation::Exit => {
+                self.state = State::Halted;
             }
-            PCOperation::Exit => return false,
         }
-
-        true
     }
 
     pub fn offset(&mut self, offset: i32) {
@@ -133,4 +145,11 @@ impl Cpu {
 
         Ok(())
     }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum State {
+    Running,
+    Paused,
+    Halted,
 }

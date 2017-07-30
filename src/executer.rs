@@ -148,6 +148,9 @@ pub fn apply_instruction(inst: &Instruction, cpu: &mut Cpu) -> PCOperation {
                 PCOperation::Offset(4)
             }
         },
+        Instruction::BREAK => {
+            PCOperation::Breakpoint
+        },
         Instruction::DIV(rs, rt) => {
             let rs_value = utils::u2i(cpu.get_register(rs));
             let rt_value = utils::u2i(cpu.get_register(rt));

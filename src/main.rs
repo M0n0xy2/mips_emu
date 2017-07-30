@@ -43,6 +43,6 @@ fn main() {
         let mut debugger = Debugger::new(cpu);
         debugger.launch();
     } else {
-        cpu.run(false);
+        cpu.continue_execution(false);
     }
 }

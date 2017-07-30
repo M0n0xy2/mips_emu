@@ -19,6 +19,7 @@ pub enum Instruction {
     BLTZ(u32, i32), // rs, offset
     BLTZAL(u32, i32), // rs, offset
     BNE(u32, u32, i32), // rs, rt, offset
+    BREAK,
     DIV(u32, u32), // rs, rt
     DIVU(u32, u32), // rs, rt
     J(u32), // instr_index
@@ -81,6 +82,7 @@ pub enum PCOperation {
     JumpReal(u32),
     JumpCompute(u32),
     Trap(String),
+    Breakpoint,
     Exit,
 }
 
@@ -103,6 +105,7 @@ impl fmt::Display for Instruction {
             Instruction::BLTZ(rs, offset) => write!(f, "bltz ${}, {:#x}", rs, offset),
             Instruction::BLTZAL(rs, offset) => write!(f, "bltzal ${}, {:#x}", rs, offset),
             Instruction::BNE(rs, rt, offset) => write!(f, "bne ${}, ${}, {:#x}", rs, rt, offset),
+            Instruction::BREAK => write!(f, "break"),
             Instruction::DIV(rs, rt) => write!(f, "div ${}, ${}", rs, rt),
             Instruction::DIVU(rs, rt) => write!(f, "divu ${}, ${}", rs, rt),
             Instruction::J(instr_index) => write!(f, "j {:#x}", instr_index),

@@ -71,6 +71,7 @@ fn decode_r_inst(word: u32) -> Instruction {
         0b001000 => decode_r_no_shift(word, |rs, _, _| Instruction::JR(rs)),
         0b001001 => decode_r_no_shift(word, |rs, _, rd| Instruction::JALR(rs, rd)),
         0b001100 => Instruction::SYSCALL,
+        0b001101 => Instruction::BREAK,
         0b010000 => decode_r_no_shift(word, |_, _, rd| Instruction::MFHI(rd)),
         0b010001 => decode_r_no_shift(word, |rs, _, _| Instruction::MTHI(rs)),
         0b010010 => decode_r_no_shift(word, |_, _, rd| Instruction::MFLO(rd)),
