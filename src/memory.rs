@@ -1,4 +1,6 @@
 use std::collections::HashMap;
+use std::fmt;
+use std::clone::Clone;
 
 #[derive(Debug, Clone)]
 pub struct Memory {
@@ -63,15 +65,33 @@ impl Memory {
 
 const BLOCK_BIT_LEN: usize = 8;
 
-#[derive(Debug, Clone)]
 struct Block {
-    pub data: Vec<u8>
+    pub data: [u8; 1 << BLOCK_BIT_LEN]
 }
 
 impl Block {
     pub fn new() -> Self {
         Block {
-            data: vec![0; 1 << BLOCK_BIT_LEN]
+            data: [0; 1 << BLOCK_BIT_LEN]
+        }
+    }
+}
+
+impl fmt::Debug for Block {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Block {{ data: {:?} }}", &&self.data[..])
+    }
+}
+
+impl Clone for Block {
+    fn clone(&self) -> Block {
+        let mut data = [0; 1 << BLOCK_BIT_LEN];
+        for i in 0..(1 << BLOCK_BIT_LEN) {
+            data[i] = self.data[i];
+        }
+
+        Block {
+            data
         }
     }
 }
