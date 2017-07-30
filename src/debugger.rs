@@ -2,7 +2,7 @@ use std::io::{self, Write};
 use std::collections::HashMap;
 
 
-use cpu::Cpu;
+use cpu::{Cpu, State};
 
 pub struct Debugger {
     cpu: Cpu,
@@ -49,6 +49,21 @@ impl Debugger {
                     println!("Error: {}", err);
                 }
             }
+        }
+    }
+
+    pub fn print_cpu_state(&self, running: bool) {
+        match self.cpu.state {
+            State::Halted => {
+                println!("CPU halted.");
+            },
+            State::Paused => {
+                println!("CPU paused.");
+            },
+            State::Running if running => {
+                println!("CPU running.")
+            },
+            _ => {}
         }
     }
 }
@@ -128,18 +143,15 @@ mod commands {
             }
         };
 
+        if dbg.cpu.state == State::Halted {
+            return Err("Cpu is halted. Please restart of load a new program.".to_string());
+        }
+
         for _ in 0..n {
             dbg.cpu.step(dbg.log);
-            match dbg.cpu.state {
-                State::Halted => {
-                    println!("Program has ended.");
-                    break
-                },
-                State::Paused => {
-                    println!("Program is paused.");
-                    break
-                },
-                _ => {}
+            dbg.print_cpu_state(false);
+            if dbg.cpu.state != State::Running {
+                break
             }
         }
         
@@ -149,8 +161,12 @@ mod commands {
     pub fn continue_cmd(dbg: &mut Debugger, args: Vec<&str>) -> Result<(), String> {
         expect_n_args!(0, args);
 
+        if dbg.cpu.state == State::Halted {
+            return Err("Cpu is halted. Please restart of load a new program.".to_string());
+        }
+
         dbg.cpu.continue_execution(dbg.log);
-        println!("Program has ended.");
+        dbg.print_cpu_state(true);
         Ok(())
     }
 
@@ -242,11 +258,7 @@ mod commands {
     pub fn state(dbg: &mut Debugger, args: Vec<&str>) -> Result<(), String> {
         expect_n_args!(0, args);
 
-        match dbg.cpu.state {
-            State::Running => println!("running"),
-            State::Halted => println!("halted"),
-            State::Paused => println!("paused"),
-        }
+        dbg.print_cpu_state(true); 
         Ok(())
     }
 }
