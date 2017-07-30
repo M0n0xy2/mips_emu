@@ -36,6 +36,7 @@ pub enum Instruction {
     MFHI(u32), // rd
     MFLO(u32), // rd
     MTHI(u32), // rs
+    MUL(u32, u32, u32), // rs, rt, rd
     MTLO(u32), // rs
     MULT(u32, u32), // rs, rt
     MULTU(u32, u32), // rs, rt
@@ -119,6 +120,7 @@ impl fmt::Display for Instruction {
             Instruction::MFLO(rd) => write!(f, "mflo ${}", rd),
             Instruction::MTHI(rs) => write!(f, "mthi ${}", rs),
             Instruction::MTLO(rs) => write!(f, "mtlo ${}", rs),
+            Instruction::MUL(rs, rt, rd) => write!(f, "mul ${}, ${}, ${}", rd, rs, rt),
             Instruction::MULT(rs, rt) => write!(f, "mult ${}, ${}", rs, rt),
             Instruction::MULTU(rs, rt) => write!(f, "multu ${}, ${}", rs, rt),
             Instruction::NOR(rs, rt, rd) => write!(f, "nor ${}, ${}, ${}", rd, rs, rt),

@@ -284,6 +284,15 @@ pub fn apply_instruction(inst: &Instruction, cpu: &mut Cpu) -> PCOperation {
             cpu.lo = cpu.get_register(rs);
             PCOperation::Offset(4)
         },
+        Instruction::MUL(rs, rt, rd) => {
+            let rs_value = utils::u2i(cpu.get_register(rs)) as i64;
+            let rt_value = utils::u2i(cpu.get_register(rt)) as i64;
+
+            let result = rs_value * rt_value;
+            let result = (result as u64) as u32;
+            cpu.set_register(rd, result);
+            PCOperation::Offset(4)
+        },
         Instruction::MULT(rs, rt) => {
             let rs_value = utils::u2i(cpu.get_register(rs)) as i64;
             let rt_value = utils::u2i(cpu.get_register(rt)) as i64;

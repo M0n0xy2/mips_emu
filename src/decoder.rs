@@ -9,6 +9,7 @@ pub fn decode_instruction(word: u32) -> Instruction {
     let instruction = word >> 26;
     match instruction {
         0b000000 => decode_r_inst(word),
+        0b011100 => decode_r2_inst(word),
         0b000001 => decode_branch_comp(word),
         0b000010 => decode_jump(word, Instruction::J),
         0b000011 => decode_jump(word, Instruction::JAL),
@@ -88,6 +89,14 @@ fn decode_r_inst(word: u32) -> Instruction {
         0b100111 => decode_r_no_shift(word, Instruction::NOR),
         0b101010 => decode_r_no_shift(word, Instruction::SLT),
         0b101011 => decode_r_no_shift(word, Instruction::SLTU),
+        _ => Instruction::Unknown(word),
+    }
+}
+
+fn decode_r2_inst(word: u32) -> Instruction {
+    let sub_op_code = (word << 26) >> 26;
+    match sub_op_code {
+        0b000010 => decode_r_no_shift(word, Instruction::MUL),
         _ => Instruction::Unknown(word),
     }
 }
