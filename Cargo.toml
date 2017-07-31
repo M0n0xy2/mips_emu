@@ -8,7 +8,7 @@ name = "lib_mips"
 path = "src/lib.rs"
 
 [[bin]]
-name = "driver"
+name = "mips_driver"
 path = "src/driver.rs"
 
 [dependencies]
