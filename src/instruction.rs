@@ -36,9 +36,11 @@ pub enum Instruction {
     LWR(u32, u32, i32), // base, rt, offset
     MFHI(u32), // rd
     MFLO(u32), // rd
+    MOVN(u32, u32, u32), // rs, rt, rd
+    MOVZ(u32, u32, u32), // rs, rt, rd
     MTHI(u32), // rs
-    MUL(u32, u32, u32), // rs, rt, rd
     MTLO(u32), // rs
+    MUL(u32, u32, u32), // rs, rt, rd
     MULT(u32, u32), // rs, rt
     MULTU(u32, u32), // rs, rt
     NOR(u32, u32, u32), // rs, rt, rd
@@ -124,6 +126,8 @@ impl fmt::Display for Instruction {
             Instruction::MFLO(rd) => write!(f, "mflo ${}", rd),
             Instruction::MTHI(rs) => write!(f, "mthi ${}", rs),
             Instruction::MTLO(rs) => write!(f, "mtlo ${}", rs),
+            Instruction::MOVN(rs, rt, rd) => write!(f, "movn ${}, ${}, ${}", rd, rs, rt),
+            Instruction::MOVZ(rs, rt, rd) => write!(f, "movz ${}, ${}, ${}", rd, rs, rt),
             Instruction::MUL(rs, rt, rd) => write!(f, "mul ${}, ${}, ${}", rd, rs, rt),
             Instruction::MULT(rs, rt) => write!(f, "mult ${}, ${}", rs, rt),
             Instruction::MULTU(rs, rt) => write!(f, "multu ${}, ${}", rs, rt),

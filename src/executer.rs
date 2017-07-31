@@ -287,6 +287,22 @@ pub fn apply_instruction(inst: &Instruction, cpu: &mut Cpu) -> PCOperation {
             cpu.lo = cpu.get_register(rs);
             PCOperation::Offset(4)
         },
+        Instruction::MOVN(rs, rt, rd) => {
+            let rt_value = cpu.get_register(rt);
+            if rt_value != 0 {
+                let rs_value = cpu.get_register(rs);
+                cpu.set_register(rd, rs_value);
+            }
+            PCOperation::Offset(4)
+        },
+        Instruction::MOVZ(rs, rt, rd) => {
+            let rt_value = cpu.get_register(rt);
+            if rt_value == 0 {
+                let rs_value = cpu.get_register(rs);
+                cpu.set_register(rd, rs_value);
+            }
+            PCOperation::Offset(4)
+        },
         Instruction::MUL(rs, rt, rd) => {
             let rs_value = utils::u2i(cpu.get_register(rs)) as i64;
             let rt_value = utils::u2i(cpu.get_register(rt)) as i64;
