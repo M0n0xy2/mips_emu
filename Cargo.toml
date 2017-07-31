@@ -3,6 +3,14 @@ name = "lse_mips"
 version = "0.1.0"
 authors = ["Paul CACHEUX <paulcacheux@gmail.com>"]
 
+[lib]
+name = "lib_mips"
+path = "src/lib.rs"
+
+[[bin]]
+name = "driver"
+path = "src/driver.rs"
+
 [dependencies]
 elf = "0.0.10"
 clap = "2.25"

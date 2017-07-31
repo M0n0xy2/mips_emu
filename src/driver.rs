@@ -1,22 +1,11 @@
-extern crate elf;
 extern crate clap;
-extern crate regex;
-#[macro_use]
-extern crate lazy_static;
+extern crate lib_mips;
+extern crate elf;
 
 use clap::{Arg, App};
 
-mod utils;
-mod memory;
-mod cpu;
-mod instruction;
-mod decoder;
-mod executer;
-mod syscall;
-mod debugger;
-
-use debugger::Debugger;
-use cpu::Cpu;
+use lib_mips::debugger::Debugger;
+use lib_mips::cpu::Cpu;
 
 fn main() {
     let matches = App::new("MIPS emulator")
