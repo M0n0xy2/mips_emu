@@ -1,16 +1,16 @@
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use std::fmt;
 use std::clone::Clone;
 
 #[derive(Debug, Clone)]
 pub struct Memory {
-    blocks: HashMap<usize, Block>
+    blocks: BTreeMap<usize, Block>
 }
 
 impl Memory {
     pub fn new() -> Memory {
         Memory {
-            blocks: HashMap::new()
+            blocks: BTreeMap::new()
         }
     }
 
