@@ -4,7 +4,7 @@ use std::path::Path;
 
 use elf;
 
-use cpu::{Cpu, State};
+use lib_mips::cpu::{Cpu, State};
 
 pub struct Debugger {
     cpu: Cpu,
@@ -89,7 +89,7 @@ mod commands {
     use std::collections::HashMap;
     use regex::Regex;
     use super::Debugger;
-    use cpu::State;
+    use lib_mips::cpu::State;
 
     macro_rules! expect_n_args {
         ($n:expr, $args:expr) => {

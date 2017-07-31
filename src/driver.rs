@@ -1,10 +1,15 @@
 extern crate clap;
 extern crate lib_mips;
 extern crate elf;
+extern crate regex;
+#[macro_use]
+extern crate lazy_static;
 
 use clap::{Arg, App};
 
-use lib_mips::debugger::Debugger;
+mod debugger;
+
+use debugger::Debugger;
 use lib_mips::cpu::Cpu;
 
 fn main() {
