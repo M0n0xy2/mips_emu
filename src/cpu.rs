@@ -95,24 +95,6 @@ impl Cpu {
         }
     }
 
-    pub fn offset(&mut self, offset: i32) {
-        self.pc = self.npc;
-        self.npc = utils::offset_addr(self.npc, offset);
-    }
-
-    pub fn jump_real(&mut self, index: u32) {
-        self.pc = self.npc;
-        self.npc = index;
-    }
-
-    pub fn jump_compute(&mut self, index: u32) {
-        self.pc = self.npc;
-
-        let upper = (self.npc >> 28) << 28;
-        let lower = (index << 6) >> 4;
-        self.npc = upper | lower;
-    }
-
     pub fn load_elf(&mut self, file: elf::File) -> Result<(), String> {
         let mut memory = Memory::new();
 
@@ -146,6 +128,24 @@ impl Cpu {
         self.npc = self.pc + 4;
 
         Ok(())
+    }
+
+    fn offset(&mut self, offset: i32) {
+        self.pc = self.npc;
+        self.npc = utils::offset_addr(self.npc, offset);
+    }
+
+    fn jump_real(&mut self, index: u32) {
+        self.pc = self.npc;
+        self.npc = index;
+    }
+
+    fn jump_compute(&mut self, index: u32) {
+        self.pc = self.npc;
+
+        let upper = (self.npc >> 28) << 28;
+        let lower = (index << 6) >> 4;
+        self.npc = upper | lower;
     }
 }
 
