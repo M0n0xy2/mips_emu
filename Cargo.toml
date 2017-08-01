@@ -1,14 +1,14 @@
 [package]
-name = "lse_mips"
+name = "mips_emu"
 version = "0.1.0"
 authors = ["Paul CACHEUX <paulcacheux@gmail.com>"]
 
 [lib]
-name = "lib_mips"
+name = "lib_mips_emu"
 path = "src/lib.rs"
 
 [[bin]]
-name = "mips_driver"
+name = "mips_emu_driver"
 path = "src/driver.rs"
 
 [dependencies]

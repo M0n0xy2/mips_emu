@@ -1,20 +1,19 @@
 use std::io::{self, Read, Write};
 
-use cpu::Cpu;
-use instruction::PCOperation;
+use cpu::{Cpu, Signal, PCOperation};
 use utils;
 
-pub fn call_syscall(cpu: &mut Cpu) -> PCOperation {
+pub fn call_syscall(cpu: &mut Cpu) -> Result<PCOperation, Signal> {
     let syscall_value = cpu.get_register(2);
     match syscall_value {
         1 => print_int(cpu),
         4 => print_string(cpu),
         5 => read_int(cpu),
         8 => read_string(cpu),
-        10 => return PCOperation::Exit,
+        10 => return Err(Signal::Exit),
         _ => panic!("Wrong syscall number"),
     }
-    PCOperation::Offset(4)
+    Ok(PCOperation::Offset(4))
 }
 
 fn print_int(cpu: &mut Cpu) {

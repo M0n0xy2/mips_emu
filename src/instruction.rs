@@ -1,4 +1,4 @@
-use cpu::Cpu;
+use cpu::{Cpu, Signal};
 use decoder;
 use executer;
 
@@ -70,22 +70,13 @@ pub enum Instruction {
 }
 
 impl Instruction {
-    pub fn apply(&self, cpu: &mut Cpu) -> PCOperation {
+    pub fn apply(&self, cpu: &mut Cpu) -> Result<(), Signal> {
         executer::apply_instruction(self, cpu)
     }
 
     pub fn from_word(word: u32) -> Instruction {
         decoder::decode_instruction(word)
     }
-}
-
-pub enum PCOperation {
-    Offset(i32),
-    JumpReal(u32),
-    JumpCompute(u32),
-    Trap(String),
-    Breakpoint,
-    Exit,
 }
 
 use std::fmt;

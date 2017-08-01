@@ -1,16 +1,16 @@
 extern crate clap;
-extern crate lib_mips;
 extern crate elf;
 extern crate regex;
 #[macro_use]
 extern crate lazy_static;
+extern crate lib_mips_emu;
 
 use clap::{Arg, App};
 
 mod debugger;
 
 use debugger::Debugger;
-use lib_mips::cpu::Cpu;
+use lib_mips_emu::cpu::Cpu;
 
 fn main() {
     let matches = App::new("MIPS emulator")

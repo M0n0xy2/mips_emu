@@ -1,5 +1,5 @@
 [root]
-name = "lse_mips"
+name = "mips_emu"
 version = "0.1.0"
 dependencies = [
  "clap 2.25.1 (registry+https://github.com/rust-lang/crates.io-index)",

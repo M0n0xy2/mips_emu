@@ -2,7 +2,7 @@ use std;
 use elf;
 
 use memory::Memory;
-use instruction::{Instruction, PCOperation};
+use instruction::Instruction;
 use utils;
 
 #[derive(Debug, Clone)]
@@ -78,19 +78,19 @@ impl Cpu {
             println!("Executing (pc={:#x}): {}", self.pc, inst);
         }
 
-        match inst.apply(self) {
-            PCOperation::Offset(value) => self.offset(value),
-            PCOperation::JumpReal(index) => self.jump_real(index),
-            PCOperation::JumpCompute(index) => self.jump_compute(index),
-            PCOperation::Trap(reason) => {
-                println!("{}", reason);
-                self.offset(4);
-            },
-            PCOperation::Breakpoint => {
-                self.state = State::Paused;
-            },
-            PCOperation::Exit => {
-                self.state = State::Halted;
+        if let Err(signal) = inst.apply(self) {
+            match signal {
+                Signal::Trap(reason) => {
+                    println!("{}", reason);
+                    self.move_pc(PCOperation::Offset(4));
+                },
+                Signal::Breakpoint => {
+                    self.state = State::Paused;
+                    self.move_pc(PCOperation::Offset(4));
+                },
+                Signal::Exit => {
+                    self.state = State::Halted;
+                }
             }
         }
     }
@@ -130,22 +130,17 @@ impl Cpu {
         Ok(())
     }
 
-    fn offset(&mut self, offset: i32) {
+    pub fn move_pc(&mut self, pcop: PCOperation) {
         self.pc = self.npc;
-        self.npc = utils::offset_addr(self.npc, offset);
-    }
-
-    fn jump_real(&mut self, index: u32) {
-        self.pc = self.npc;
-        self.npc = index;
-    }
-
-    fn jump_compute(&mut self, index: u32) {
-        self.pc = self.npc;
-
-        let upper = (self.npc >> 28) << 28;
-        let lower = (index << 6) >> 4;
-        self.npc = upper | lower;
+        self.npc = match pcop {
+            PCOperation::Offset(offset) => utils::offset_addr(self.npc, offset),
+            PCOperation::JumpReal(index) => index,
+            PCOperation::JumpCompute(index) => {
+                let upper = (self.npc >> 28) << 28;
+                let lower = (index << 6) >> 4;
+                upper | lower
+            }
+        }
     }
 }
 
@@ -154,4 +149,18 @@ pub enum State {
     Running,
     Paused,
     Halted,
+}
+
+#[derive(Debug, Clone)]
+pub enum PCOperation {
+    Offset(i32),
+    JumpReal(u32),
+    JumpCompute(u32),
+}
+
+#[derive(Debug, Clone)]
+pub enum Signal {
+    Trap(String),
+    Breakpoint,
+    Exit,
 }
