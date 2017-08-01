@@ -13,7 +13,6 @@ pub struct Cpu {
     pub pc: u32,
     npc: u32,
     pub memory: Memory,
-    pub state: State,
 }
 
 impl Cpu {
@@ -25,7 +24,6 @@ impl Cpu {
             pc: 0,
             npc: 4,
             memory: Memory::new(),
-            state: State::Halted,
         }
     }
 
@@ -55,42 +53,25 @@ impl Cpu {
         self.pc = 0;
         self.npc = 4;
         self.memory = memory;
-        self.state = State::Paused;
     }
 
-    pub fn continue_execution(&mut self, log: bool) {
-        if self.state != State::Halted {
-            loop {
-                self.step(log);
-                if self.state != State::Running {
-                    break
-                }
+    pub fn run(&mut self, single_step: bool, log: bool) -> Option<Signal> {
+        loop {
+            let word = self.memory.get_word(self.pc);
+            let inst = Instruction::from_word(word);
+
+            if log {
+                println!("Executing (pc={:#x}): {}", self.pc, inst);
             }
-        }
-    }
 
-    pub fn step(&mut self, log: bool) {
-        self.state = State::Running;
-        let word = self.memory.get_word(self.pc);
-        let inst = Instruction::from_word(word);
-        
-        if log {
-            println!("Executing (pc={:#x}): {}", self.pc, inst);
-        }
+            let res = inst.apply(self);
 
-        if let Err(signal) = inst.apply(self) {
-            match signal {
-                Signal::Trap(reason) => {
-                    println!("{}", reason);
-                    self.move_pc(PCOperation::Offset(4));
-                },
-                Signal::Breakpoint => {
-                    self.state = State::Paused;
-                    self.move_pc(PCOperation::Offset(4));
-                },
-                Signal::Exit => {
-                    self.state = State::Halted;
-                }
+            if single_step {
+                return res.err()
+            }
+
+            if let Err(signal) = res {
+                return Some(signal)
             }
         }
     }
@@ -144,13 +125,6 @@ impl Cpu {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum State {
-    Running,
-    Paused,
-    Halted,
-}
-
 #[derive(Debug, Clone)]
 pub enum PCOperation {
     Offset(i32),
@@ -158,9 +132,20 @@ pub enum PCOperation {
     JumpCompute(u32),
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Signal {
     Trap(String),
     Breakpoint,
     Exit,
+}
+
+use std::fmt;
+impl fmt::Display for Signal {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            Signal::Trap(ref reason) => write!(f, "Trapped on {}.", reason),
+            Signal::Breakpoint => write!(f, "Stopped on breakpoint."),
+            Signal::Exit => write!(f, "Cpu halted.")
+        }
+    }
 }

@@ -4,7 +4,7 @@ use std::path::Path;
 
 use elf;
 
-use lib_mips_emu::cpu::{Cpu, State};
+use lib_mips_emu::cpu::Cpu;
 
 pub struct Debugger {
     cpu: Cpu,
@@ -53,7 +53,6 @@ impl Debugger {
         cmds.insert("continue", commands::continue_cmd);
         cmds.insert("print", commands::print);
         cmds.insert("log", commands::log);
-        cmds.insert("state", commands::state);
 
         if let Some(cmd_func) = cmds.get(cmd) {
             if let Err(err) = cmd_func(self, args) {
@@ -68,28 +67,13 @@ impl Debugger {
         self.saved_cpu = Some(self.cpu.clone());
         Ok(())
     }
-
-    pub fn print_cpu_state(&self, running: bool) {
-        match self.cpu.state {
-            State::Halted => {
-                println!("CPU halted.");
-            },
-            State::Paused => {
-                println!("CPU paused.");
-            },
-            State::Running if running => {
-                println!("CPU running.")
-            },
-            _ => {}
-        }
-    }
 }
 
 mod commands {
     use std::collections::HashMap;
     use regex::Regex;
     use super::Debugger;
-    use lib_mips_emu::cpu::State;
+    use lib_mips_emu::cpu::Signal;
 
     macro_rules! expect_n_args {
         ($n:expr, $args:expr) => {
@@ -133,7 +117,6 @@ mod commands {
         println!("print $XX - print register");
         println!("print 0xXXXXXXXX - print memory byre");
         println!("log [on|off] - (de)activate the execution logging");
-        println!("state - print cpu state (halted|running|paused)");
         Ok(())
     }
 
@@ -179,15 +162,12 @@ mod commands {
             }
         };
 
-        if dbg.cpu.state == State::Halted {
-            return Err("Cpu is halted. Please restart of load a new program.".to_string());
-        }
-
         for _ in 0..n {
-            dbg.cpu.step(dbg.log);
-            dbg.print_cpu_state(false);
-            if dbg.cpu.state != State::Running {
-                break
+            if let Some(signal) = dbg.cpu.run(true, dbg.log) {
+                println!("{}", signal);
+                if signal == Signal::Exit {
+                    break
+                }
             }
         }
         
@@ -197,12 +177,9 @@ mod commands {
     pub fn continue_cmd(dbg: &mut Debugger, args: Vec<&str>) -> Result<(), String> {
         expect_n_args!(0, args);
 
-        if dbg.cpu.state == State::Halted {
-            return Err("Cpu is halted. Please restart of load a new program.".to_string());
+        if let Some(signal) = dbg.cpu.run(false, dbg.log) {
+            println!("{}", signal);
         }
-
-        dbg.cpu.continue_execution(dbg.log);
-        dbg.print_cpu_state(true);
         Ok(())
     }
 
@@ -288,13 +265,6 @@ mod commands {
             _ => return Err("Unrecognized argument.".to_string())
         };
 
-        Ok(())
-    }
-
-    pub fn state(dbg: &mut Debugger, args: Vec<&str>) -> Result<(), String> {
-        expect_n_args!(0, args);
-
-        dbg.print_cpu_state(true); 
         Ok(())
     }
 }
