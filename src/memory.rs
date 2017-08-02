@@ -1,16 +1,19 @@
 use std::collections::BTreeMap;
 use std::fmt;
 use std::clone::Clone;
+use std::cell::RefCell;
 
 #[derive(Debug, Clone)]
 pub struct Memory {
-    blocks: BTreeMap<usize, Block>
+    blocks: BTreeMap<usize, Block>,
+    cache: RefCell<Option<Cache>>
 }
 
 impl Memory {
     pub fn new() -> Memory {
         Memory {
-            blocks: BTreeMap::new()
+            blocks: BTreeMap::new(),
+            cache: RefCell::new(None)
         }
     }
 
@@ -18,7 +21,18 @@ impl Memory {
     pub fn get_byte(&self, index: u32) -> u8 {
         let (block_id, data_id) = get_ids(index);
 
+        if let Some(ref cache) = *self.cache.borrow() {
+            if cache.block_id == block_id {
+                return cache.block.data[data_id];
+            }
+        }
+
         if let Some(block) = self.blocks.get(&block_id) {
+            // we populate the cache
+            *self.cache.borrow_mut() = Some(Cache {
+                block_id,
+                block: block.clone()
+            });
             block.data[data_id]
         } else {
             0
@@ -27,6 +41,7 @@ impl Memory {
 
     #[inline]
     pub fn set_byte(&mut self, index: u32, byte: u8) {
+        self.cache = RefCell::new(None); // we invalidate the cache
         let (block_id, data_id) = get_ids(index);
 
         self.blocks
@@ -94,6 +109,12 @@ impl Clone for Block {
             data
         }
     }
+}
+
+#[derive(Debug, Clone)]
+struct Cache {
+    pub block_id: usize,
+    pub block: Block,
 }
 
 fn get_ids(index: u32) -> (usize, usize) {
