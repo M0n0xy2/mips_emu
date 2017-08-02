@@ -40,6 +40,6 @@ fn main() {
         let path = matches.value_of("INPUT").unwrap();
         let elf_file = elf::File::open_path(path).expect("Can't read elf.");
         cpu.load_elf(elf_file).unwrap();
-        cpu.continue_execution(false);
+        cpu.run(false, false);
     }
 }
