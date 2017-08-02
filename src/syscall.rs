@@ -1,5 +1,7 @@
 use std::io::{self, Read, Write};
 
+use regex::Regex;
+
 use cpu::{Cpu, Signal, PCOperation};
 use utils;
 
@@ -33,11 +35,17 @@ fn print_string(cpu: &mut Cpu) {
 }
 
 fn read_int(cpu: &mut Cpu) {
+    lazy_static! {
+        static ref INT_REGEX: Regex = Regex::new(r"^\s*([+-]?[0-9]+).*").unwrap();
+    }
+
     let mut line = String::new();
     io::stdin().read_line(&mut line).unwrap();
 
-    let i : i32 = line.trim().parse().unwrap();
-    cpu.set_register(2, utils::i2u(i));
+    let capt = INT_REGEX.captures(&line).unwrap();
+    let result: i32 = (&capt[0]).parse().unwrap();
+
+    cpu.set_register(2, utils::i2u(result));
 }
 
 fn read_string(cpu: &mut Cpu) {
