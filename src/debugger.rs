@@ -49,11 +49,15 @@ impl Debugger {
         cmds.insert("load", commands::load);
         cmds.insert("restart", commands::restart);
         cmds.insert("registers", commands::registers);
+        cmds.insert("r", commands::registers);
         cmds.insert("step", commands::step);
+        cmds.insert("s", commands::step);
         cmds.insert("continue", commands::continue_cmd);
+        cmds.insert("c", commands::continue_cmd);
         cmds.insert("print", commands::print);
         cmds.insert("log", commands::log);
         cmds.insert("breakpoint", commands::breakpoint);
+        cmds.insert("b", commands::breakpoint);
 
         if let Some(cmd_func) = cmds.get(cmd) {
             if let Err(err) = cmd_func(self, args) {
@@ -154,11 +158,11 @@ mod commands {
         println!("Debugger help:");
         println!("  load <path> - load elf file");
         println!("  restart - restart the current program");
-        println!("  registers - print value of all registers");
-        println!("  step - execute the next instruction");
-        println!("  continue - run the program until breakpoint/exit");
-        println!("  breakpoint - list breakpoints");
-        println!("  breakpoint 0xXXXXXXXX - add/remove breakpoint");
+        println!("  r[egisters] - print value of all registers");
+        println!("  s[tep] - execute the next instruction");
+        println!("  c[ontinue] - run the program until breakpoint/exit");
+        println!("  b[reakpoint] - list breakpoints");
+        println!("  b[reakpoint] 0xXXXXXXXX - add/remove breakpoint");
         println!("  print $XX - print register");
         println!("  print 0xXXXXXXXX - print memory byre");
         println!("  log [on|off] - (de)activate the execution logging");
