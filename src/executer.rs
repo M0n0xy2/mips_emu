@@ -4,7 +4,12 @@ use cpu::{Cpu, Signal, PCOperation};
 use syscall;
 
 pub fn apply_instruction(inst: &Instruction, cpu: &mut Cpu) -> Result<(), Signal> {
-    apply_instruction_inner(inst, cpu).map(|pcop| cpu.move_pc(pcop))
+    let (pcop, maybe_signal) = match apply_instruction_inner(inst, cpu) {
+        Ok(pcop) => (pcop, Ok(())),
+        Err(signal) => (PCOperation::Offset(4), Err(signal)),
+    };
+    cpu.move_pc(pcop);
+    maybe_signal
 }
 
 macro_rules! check_address_aligned_word {
@@ -153,7 +158,7 @@ fn apply_instruction_inner(inst: &Instruction, cpu: &mut Cpu) -> Result<PCOperat
             }
         },
         Instruction::BREAK => {
-            Err(Signal::Breakpoint)
+            Err(Signal::Breakpoint(pc))
         },
         Instruction::DIV(rs, rt) => {
             let rs_value = utils::u2i(cpu.get_register(rs));

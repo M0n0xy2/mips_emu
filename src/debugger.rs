@@ -53,6 +53,7 @@ impl Debugger {
         cmds.insert("continue", commands::continue_cmd);
         cmds.insert("print", commands::print);
         cmds.insert("log", commands::log);
+        cmds.insert("breakpoint", commands::breakpoint);
 
         if let Some(cmd_func) = cmds.get(cmd) {
             if let Err(err) = cmd_func(self, args) {
@@ -105,18 +106,62 @@ mod commands {
         }
     }
 
+    lazy_static! {
+        static ref REGISTER_DIRECT_REGEX: Regex = Regex::new(r"\$([0-9]{1,2})").unwrap();
+        static ref REGISTER_ALIAS_REGEX: Regex = Regex::new(r"\$([a-zA-Z0-9]+)").unwrap();
+        static ref MEMORY_REGEX: Regex = Regex::new(r"0x([a-fA-F0-9]{0,8})").unwrap();
+        static ref REGISTER_ALIASES: HashMap<&'static str, u32> = {
+            let mut map = HashMap::new();
+            map.insert("zero", 0u32);
+            map.insert("at", 1);
+            map.insert("v0", 2);
+            map.insert("v1", 3);
+            map.insert("a0", 4);
+            map.insert("a1", 5);
+            map.insert("a2", 6);
+            map.insert("a3", 7);
+            map.insert("t0", 8);
+            map.insert("t1", 9);
+            map.insert("t2", 10);
+            map.insert("t3", 11);
+            map.insert("t4", 12);
+            map.insert("t5", 13);
+            map.insert("t6", 14);
+            map.insert("t7", 15);
+            map.insert("s0", 16);
+            map.insert("s1", 17);
+            map.insert("s2", 18);
+            map.insert("s3", 19);
+            map.insert("s4", 20);
+            map.insert("s5", 21);
+            map.insert("s6", 22);
+            map.insert("s7", 23);
+            map.insert("t8", 24);
+            map.insert("t9", 25);
+            map.insert("k0", 26);
+            map.insert("k1", 27);
+            map.insert("gp", 28);
+            map.insert("sp", 29);
+            map.insert("fp", 30);
+            map.insert("ra", 31);
+            map
+        };
+    }
+
     pub type Command = fn(dbg: &mut Debugger, args: Vec<&str>) -> Result<(), String>;
 
     pub fn help(_: &mut Debugger, _: Vec<&str>) -> Result<(), String> {
         println!("Debugger help:");
-        println!("load <path> - load elf file");
-        println!("restart - restart the current program");
-        println!("registers - print value of all registers");
-        println!("step - execute the next instruction");
-        println!("continue - run the program until breakpoint/exit");
-        println!("print $XX - print register");
-        println!("print 0xXXXXXXXX - print memory byre");
-        println!("log [on|off] - (de)activate the execution logging");
+        println!("  load <path> - load elf file");
+        println!("  restart - restart the current program");
+        println!("  registers - print value of all registers");
+        println!("  step - execute the next instruction");
+        println!("  continue - run the program until breakpoint/exit");
+        println!("  breakpoint - list breakpoints");
+        println!("  breakpoint 0xXXXXXXXX - add/remove breakpoint");
+        println!("  print $XX - print register");
+        println!("  print 0xXXXXXXXX - print memory byre");
+        println!("  log [on|off] - (de)activate the execution logging");
         Ok(())
     }
 
@@ -165,8 +210,9 @@ mod commands {
         for _ in 0..n {
             if let Some(signal) = dbg.cpu.run(true, dbg.log) {
                 println!("{}", signal);
-                if signal == Signal::Exit {
-                    break
+                match signal {
+                    Signal::Exit => break,
+                    _ => {}
                 }
             }
         }
@@ -183,50 +229,27 @@ mod commands {
         Ok(())
     }
 
+    pub fn breakpoint(dbg: &mut Debugger, args: Vec<&str>) -> Result<(), String> {
+        expect_max_n_args!(1, args);
+
+        if args.len() == 0 {
+            println!("breakpoints:");
+            for bp in &dbg.cpu.breakpoints {
+                println!("  {}", bp);
+            }
+        } else {
+            if let Some(capt) = MEMORY_REGEX.captures(args[0]) {
+                let pc = u32::from_str_radix(&capt[1], 16).unwrap();
+                dbg.cpu.add_or_remove_breakpoint(pc);
+            } else {
+                return Err("Can't parse the address.".to_string());
+            }
+        }
+        Ok(())
+    }
+
     pub fn print(dbg: &mut Debugger, args: Vec<&str>) -> Result<(), String> {
         expect_n_args!(1, args);
-
-        lazy_static! {
-            static ref REGISTER_DIRECT_REGEX: Regex = Regex::new(r"\$([0-9]{1,2})").unwrap();
-            static ref REGISTER_ALIAS_REGEX: Regex = Regex::new(r"\$([a-zA-Z0-9]+)").unwrap();
-            static ref MEMORY_REGEX: Regex = Regex::new(r"0x([a-fA-F0-9]{0,8})").unwrap();
-            static ref REGISTER_ALIASES: HashMap<&'static str, u32> = {
-                let mut map = HashMap::new();
-                map.insert("zero", 0u32);
-                map.insert("at", 1);
-                map.insert("v0", 2);
-                map.insert("v1", 3);
-                map.insert("a0", 4);
-                map.insert("a1", 5);
-                map.insert("a2", 6);
-                map.insert("a3", 7);
-                map.insert("t0", 8);
-                map.insert("t1", 9);
-                map.insert("t2", 10);
-                map.insert("t3", 11);
-                map.insert("t4", 12);
-                map.insert("t5", 13);
-                map.insert("t6", 14);
-                map.insert("t7", 15);
-                map.insert("s0", 16);
-                map.insert("s1", 17);
-                map.insert("s2", 18);
-                map.insert("s3", 19);
-                map.insert("s4", 20);
-                map.insert("s5", 21);
-                map.insert("s6", 22);
-                map.insert("s7", 23);
-                map.insert("t8", 24);
-                map.insert("t9", 25);
-                map.insert("k0", 26);
-                map.insert("k1", 27);
-                map.insert("gp", 28);
-                map.insert("sp", 29);
-                map.insert("fp", 30);
-                map.insert("ra", 31);
-                map
-            };
-        }
 
         let arg = args[0];
         if let Some(capt) = REGISTER_DIRECT_REGEX.captures(arg) {

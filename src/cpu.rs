@@ -1,4 +1,5 @@
 use std;
+use std::collections::HashSet;
 use elf;
 
 use memory::Memory;
@@ -13,6 +14,8 @@ pub struct Cpu {
     pub pc: u32,
     npc: u32,
     pub memory: Memory,
+    pub breakpoints: HashSet<u32>,
+    waiting_breakpoint: Option<u32>,
 }
 
 impl Cpu {
@@ -24,6 +27,8 @@ impl Cpu {
             pc: 0,
             npc: 4,
             memory: Memory::new(),
+            breakpoints: HashSet::new(),
+            waiting_breakpoint: None,
         }
     }
 
@@ -57,6 +62,13 @@ impl Cpu {
 
     pub fn run(&mut self, single_step: bool, log: bool) -> Option<Signal> {
         loop {
+            if self.breakpoints.contains(&self.pc) {
+                self.transfer_bp();
+                self.waiting_breakpoint = Some(self.pc);
+                self.breakpoints.remove(&self.pc);
+                return Some(Signal::Breakpoint(self.pc));
+            }
+
             let word = self.memory.get_word(self.pc);
             let inst = Instruction::from_word(word);
 
@@ -66,6 +78,8 @@ impl Cpu {
 
             let res = inst.apply(self);
 
+            self.transfer_bp();
+
             if single_step {
                 return res.err()
             }
@@ -73,6 +87,25 @@ impl Cpu {
             if let Err(signal) = res {
                 return Some(signal)
             }
+        }
+    }
+
+    pub fn move_pc(&mut self, pcop: PCOperation) {
+        self.pc = self.npc;
+        self.npc = match pcop {
+            PCOperation::Offset(offset) => utils::offset_addr(self.npc, offset),
+            PCOperation::JumpReal(index) => index,
+            PCOperation::JumpCompute(index) => {
+                let upper = (self.npc >> 28) << 28;
+                let lower = (index << 6) >> 4;
+                upper | lower
+            }
+        }
+    }
+
+    pub fn add_or_remove_breakpoint(&mut self, pc: u32) {
+        if !self.breakpoints.remove(&pc) {
+            self.breakpoints.insert(pc);
         }
     }
 
@@ -111,16 +144,9 @@ impl Cpu {
         Ok(())
     }
 
-    pub fn move_pc(&mut self, pcop: PCOperation) {
-        self.pc = self.npc;
-        self.npc = match pcop {
-            PCOperation::Offset(offset) => utils::offset_addr(self.npc, offset),
-            PCOperation::JumpReal(index) => index,
-            PCOperation::JumpCompute(index) => {
-                let upper = (self.npc >> 28) << 28;
-                let lower = (index << 6) >> 4;
-                upper | lower
-            }
+    fn transfer_bp(&mut self) {
+        if let Some(bp) = self.waiting_breakpoint.take() {
+            self.breakpoints.insert(bp);
         }
     }
 }
@@ -134,8 +160,8 @@ pub enum PCOperation {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Signal {
-    Trap(String),
-    Breakpoint,
+    Trap(String), // TODO add an enum
+    Breakpoint(u32), // the bp pc
     Exit,
 }
 
@@ -144,7 +170,7 @@ impl fmt::Display for Signal {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
             Signal::Trap(ref reason) => write!(f, "Trapped on {}.", reason),
-            Signal::Breakpoint => write!(f, "Stopped on breakpoint."),
+            Signal::Breakpoint(pc) => write!(f, "Stopped on breakpoint (pc={:#x}).", pc),
             Signal::Exit => write!(f, "Cpu halted.")
         }
     }
